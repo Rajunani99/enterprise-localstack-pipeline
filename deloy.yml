@@ -1,0 +1,33 @@
+name: DevOps LocalStack Deployment Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository Code
+      uses: actions/checkout@v4
+
+    - name: Spin up LocalStack
+      run: |
+        docker run -d \
+          --name localstack_main \
+          -p 4566:4566 \
+          -p 4510-4559:4510-4559 \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          localstack/localstack
+        sleep 15
+
+    - name: Install and Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Terraform Init & Apply
+      run: |
+        terraform init
+        terraform validate
+        terraform apply -auto-approve
